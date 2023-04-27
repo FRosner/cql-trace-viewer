@@ -3,6 +3,7 @@ from dash import Dash, dcc, html, dash_table
 from dash.dependencies import Input, Output
 import dash_cytoscape
 from io import StringIO
+import re
 
 app = Dash(__name__)
 
@@ -17,15 +18,34 @@ trace_table = dash_table.DataTable(data=[{}])
 
 network = dash_cytoscape.Cytoscape(
     id='cytoscape',
-    elements=[
-        {'data': {'id': 'ca', 'label': 'Canada'}},
-        {'data': {'id': 'on', 'label': 'Ontario'}},
-        {'data': {'id': 'qc', 'label': 'Quebec'}},
-        {'data': {'source': 'ca', 'target': 'on'}},
-        {'data': {'source': 'ca', 'target': 'qc'}}
-    ],
+    elements=[],
     layout={'name': 'breadthfirst'},
-    style={'width': '400px', 'height': '500px'}
+    style={'width': '100%', 'height': '400px'},
+    stylesheet=[
+        {
+            'selector': 'node',
+            'style': {
+                'label': 'data(id)'
+            }
+        },
+        {
+            'selector': 'edge',
+            'style': {
+                # The default curve style does not work with certain arrows
+                'curve-style': 'bezier'
+            }
+        },
+        {
+            'selector': '.message_sent',
+            'style': {
+                'target-arrow-shape': 'triangle',
+                'label': 'data(type)',
+                'width': 'data(width)'
+            }
+        }
+    ],
+    userZoomingEnabled=False,
+    userPanningEnabled=False
 )
 
 app.layout = html.Div([
@@ -33,6 +53,9 @@ app.layout = html.Div([
     trace_table,
     network
 ])
+
+def scale_arrow_width(max_size, size):
+    return str(size / max_size * 10 + 1) + "px"
 
 @app.callback(
     Output(trace_table, 'data'),
@@ -47,7 +70,24 @@ def parse_trace(raw_trace):
     table_header = [{"name": i, "id": i} for i in df.columns]
 
     network_nodes = list(map(lambda n: {'data': {'id': n, 'label': n}}, df['source'].unique()))
-    return table_data, table_header, network_nodes
+    network_edges = []
+    max_message_size = 0
+    for index, row in df.iterrows():
+        sending_search = re.search('Sending (.*) message to /(.*), size=(.*) bytes', row['activity'], re.IGNORECASE)
+
+        if sending_search:
+            message_source = row['source']
+            message_type = sending_search.group(1)
+            message_target = sending_search.group(2)
+            message_size = sending_search.group(3)
+            max_message_size = max(int(message_size), max_message_size)
+            network_edges.append({'data': {'source': message_source, 'target': message_target, 'type': message_type, 'size': message_size}, 'classes': 'message_sent'})
+
+    for edge in network_edges:
+        edge['data'].update({'width': scale_arrow_width(max_message_size, int(edge['data']['size']))})
+
+    network_data = network_nodes + network_edges
+    return table_data, table_header, network_data
 
 if __name__ == "__main__":
     app.run_server(debug=True)
