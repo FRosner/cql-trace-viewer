@@ -4,12 +4,16 @@ import datetime
 from dash import Dash, dcc, html, dash_table
 from dash.dependencies import Input, Output
 import dash_cytoscape
+import dash_daq
 from io import StringIO
 import re
 
 app = Dash(__name__)
 
-trace_gantt = dcc.Graph(id='trace_gantt')
+trace_gantt = dcc.Graph(
+    id='trace_gantt',
+    style={'width': '100%', 'height': '1200px'}
+)
 
 with open('trace.txt', 'r') as trace_file:
     trace_input = dcc.Textarea(
@@ -87,30 +91,28 @@ def build_network_data(df, active_cell):
 
     return network_nodes + network_edges
 
-# TODO add source to label
-# TODO deal with final activity per source
-def build_gantt_fig(df, active_cell):
+def build_scatter_fig(df, active_cell):
     source_root_timestamps = {}
     gantt_activities = {}
     for index, row in df.iterrows():
+        source = row['source']
         activity_timestamp = datetime.datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-        activity_elapsed_timestamp = activity_timestamp + datetime.timedelta(microseconds=int(row['source_elapsed']))
-        if row['source'] not in source_root_timestamps:
-            source_root_timestamps[row['source']] = activity_timestamp
-        if row['source'] not in gantt_activities:
-            gantt_activities[row['source']] = []
-        last_activity = gantt_activities[row['source']][-1:]
-        if last_activity:
-            last_activity[0].update({'end': activity_elapsed_timestamp})
-        gantt_activity = {'activity': row['activity'], 'start': activity_elapsed_timestamp, 'source': row['source']}
-        gantt_activities[row['source']].append(gantt_activity)
+        if source not in source_root_timestamps:
+            source_root_timestamps[source] = activity_timestamp
+        if source not in gantt_activities:
+            gantt_activities[source] = []
+
+        activity_elapsed_timestamp = source_root_timestamps[source] + datetime.timedelta(microseconds=int(row['source_elapsed']))
+
+        gantt_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'start': activity_elapsed_timestamp, 'source': source}
+        gantt_activities[source].append(gantt_activity)
 
     flattened_activities = [item for sublist in list(gantt_activities.values()) for item in sublist]
     fig_df = pd.DataFrame.from_dict(flattened_activities)
-    gantt_fig = px.timeline(data_frame=fig_df, x_start="start", x_end="end", y="activity")
-    gantt_fig.update_yaxes(autorange="reversed")
-    gantt_fig.update_layout(transition_duration=500)
-    return gantt_fig
+    fig = px.scatter(data_frame=fig_df, x='start', y='activity', color='source')
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout(transition_duration=500)
+    return fig
 
 @app.callback(
     Output(trace_table, 'data'),
@@ -129,9 +131,9 @@ def parse_trace(raw_trace, active_cell):
 
         network_data = build_network_data(df, active_cell)
 
-        gantt_fig = build_gantt_fig(df, active_cell)
+        scatter_fig = build_scatter_fig(df, active_cell)
 
-        return table_data, table_header, network_data, gantt_fig
+        return table_data, table_header, network_data, scatter_fig
     except Exception as ex:
         print(ex)
 
