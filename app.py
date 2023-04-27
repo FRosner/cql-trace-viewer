@@ -37,11 +37,17 @@ app.layout = html.Div([
 @app.callback(
     Output(trace_table, 'data'),
     Output(trace_table, 'columns'),
+    Output(network, 'elements'),
     Input(trace_input, 'value')
 )
 def parse_trace(raw_trace):
-    df = pd.read_csv(StringIO(raw_trace), sep='|', header=0, skiprows=2)
-    return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns]
+    df = pd.read_csv(StringIO(raw_trace), sep='\s*\|\s*', header=0, skiprows=[1], engine='python')
+
+    table_data = df.to_dict('records')
+    table_header = [{"name": i, "id": i} for i in df.columns]
+
+    network_nodes = list(map(lambda n: {'data': {'id': n, 'label': n}}, df['source'].unique()))
+    return table_data, table_header, network_nodes
 
 if __name__ == "__main__":
     app.run_server(debug=True)
