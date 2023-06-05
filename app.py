@@ -12,7 +12,6 @@ app = Dash(__name__)
 
 trace_gantt = dcc.Graph(
     id='trace_gantt',
-    style={'width': '100%', 'height': '1200px'}
 )
 
 with open('trace.txt', 'r') as trace_file:
@@ -60,8 +59,8 @@ network = dash_cytoscape.Cytoscape(
 
 app.layout = html.Div([
     trace_input,
-    trace_table,
     trace_gantt,
+    trace_table,
     network
 ])
 
@@ -119,6 +118,7 @@ def build_scatter_fig(df, active_cell):
     Output(trace_table, 'columns'),
     Output(network, 'elements'),
     Output(trace_gantt, 'figure'),
+    Output(trace_gantt, 'style'),
     Input(trace_input, 'value'),
     Input(trace_table, 'active_cell')
 )
@@ -132,8 +132,9 @@ def parse_trace(raw_trace, active_cell):
         network_data = build_network_data(df, active_cell)
 
         scatter_fig = build_scatter_fig(df, active_cell)
+        scatter_style = style={'width': '100%', 'height': str(len(df) * 40) + 'px'}
 
-        return table_data, table_header, network_data, scatter_fig
+        return table_data, table_header, network_data, scatter_fig, scatter_style
     except Exception as ex:
         print(ex)
 
