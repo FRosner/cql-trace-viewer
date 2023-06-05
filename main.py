@@ -7,7 +7,9 @@ from dash.dependencies import Input, Output
 from io import StringIO
 import re
 
-app = Dash(__name__)
+dash_app = Dash(__name__)
+app = dash_app.server
+app.title = "CQL Trace Viewer"
 
 trace_scatter = dcc.Graph(
     id='trace_scatter',
@@ -24,7 +26,7 @@ trace_table = dash_table.DataTable(
     data=[{}]
 )
 
-app.layout = html.Div([
+dash_app.layout = html.Div([
     trace_input,
     trace_scatter,
     trace_table
@@ -95,7 +97,7 @@ def build_scatter_fig(df):
     return fig
 
 
-@app.callback(
+@dash_app.callback(
     Output(trace_table, 'data'),
     Output(trace_table, 'columns'),
     Output(trace_scatter, 'figure'),
@@ -120,4 +122,4 @@ def parse_trace(raw_trace):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    dash_app.run_server(debug=True)

@@ -16,10 +16,15 @@ pip install -r requirements.txt
 python app.py
 ```
 
+### Deployment
+
+```
+gcloud app deploy
+```
+
 ## Features
 
 - [x] Display table
-- [ ] Display message graph
-- [ ] Display gantt chart
-- [ ] Clicking an arrow or table row or gantt chart box highlights the same data in the other visualizations
-- [ ] Allow stepping through TRACE and plot only part of the graph + highlight gantt chart
+- [x] Display scatter plot
+- [x] Display message graph
+- [ ] Select CQL / C* / DSE version
