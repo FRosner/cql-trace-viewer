@@ -30,6 +30,7 @@ app.layout = html.Div([
     trace_table
 ])
 
+
 def scale_arrow_width(max_size, size):
     return str(size / max_size * 10 + 1) + "px"
 
@@ -39,6 +40,7 @@ def build_scatter_fig(df):
     trace_activities = {}
     sent_messages = []
     messages = []
+    scatter_colors = {}
     for index, row in df.iterrows():
         # Build activities
         source = row['source']
@@ -82,15 +84,21 @@ def build_scatter_fig(df):
     fig_df = pd.DataFrame.from_records(flattened_activities)
     fig = px.scatter(data_frame=fig_df, x='start', y='activity', color='source')
 
+    for scatter in fig["data"]:
+        scatter_colors[scatter["name"]] = scatter["marker"]["color"]
     for message in messages:
-        fig.add_trace(go.Scatter(
-            x=[message["source_start"], message["target_start"]],
-            y=[message['source_activity'], message["target_activity"]],
-            mode='lines', name='now', showlegend=False, line=go.scatter.Line(color="gray", dash="dash"),
-        ))
+        fig.add_annotation(
+            x=message["target_start"], y=message["target_activity"],  # arrow head
+            ax=message["source_start"], ay=message['source_activity'],  # arrows tial
+            xref='x', yref='y', axref='x', ayref='y',
+            text='', showarrow=True,  # only show the arrow
+            arrowhead=2, arrowsize=1.5, arrowwidth=1,
+            arrowcolor=scatter_colors[message["source"]]
+        )
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(transition_duration=500)
     return fig
+
 
 @app.callback(
     Output(trace_table, 'data'),
@@ -114,6 +122,7 @@ def parse_trace(raw_trace):
             return [], [], [], {}, {}
     except Exception as ex:
         print(ex)
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
