@@ -4,7 +4,6 @@ import datetime
 from dash import Dash, dcc, html, dash_table
 from dash.dependencies import Input, Output
 import dash_cytoscape
-import dash_daq
 from io import StringIO
 import re
 
@@ -90,7 +89,7 @@ def build_network_data(df, active_cell):
 
     return network_nodes + network_edges
 
-def build_scatter_fig(df, active_cell):
+def build_scatter_fig(df):
     source_root_timestamps = {}
     gantt_activities = {}
     for index, row in df.iterrows():
@@ -107,7 +106,7 @@ def build_scatter_fig(df, active_cell):
         gantt_activities[source].append(gantt_activity)
 
     flattened_activities = [item for sublist in list(gantt_activities.values()) for item in sublist]
-    fig_df = pd.DataFrame.from_dict(flattened_activities)
+    fig_df = pd.DataFrame.from_records(flattened_activities)
     fig = px.scatter(data_frame=fig_df, x='start', y='activity', color='source')
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(transition_duration=500)
@@ -131,8 +130,8 @@ def parse_trace(raw_trace, active_cell):
 
         network_data = build_network_data(df, active_cell)
 
-        scatter_fig = build_scatter_fig(df, active_cell)
-        scatter_style = style={'width': '100%', 'height': str(len(df) * 40) + 'px'}
+        scatter_fig = build_scatter_fig(df)
+        scatter_style = {'width': '100%', 'height': str(len(df) * 40) + 'px'}
 
         return table_data, table_header, network_data, scatter_fig, scatter_style
     except Exception as ex:
