@@ -123,17 +123,20 @@ def build_scatter_fig(df):
 )
 def parse_trace(raw_trace, active_cell):
     try:
-        df = pd.read_csv(StringIO(raw_trace), sep='\s*\|\s*', header=0, skiprows=[1], engine='python')
+        if raw_trace:
+            df = pd.read_csv(StringIO(raw_trace), sep='\s*\|\s*', header=0, skiprows=[1], engine='python')
 
-        table_data = df.to_dict('records')
-        table_header = [{"name": i, "id": i} for i in df.columns]
+            table_data = df.to_dict('records')
+            table_header = [{"name": i, "id": i} for i in df.columns]
 
-        network_data = build_network_data(df, active_cell)
+            network_data = build_network_data(df, active_cell)
 
-        scatter_fig = build_scatter_fig(df)
-        scatter_style = {'width': '100%', 'height': str(len(df) * 40) + 'px'}
+            scatter_fig = build_scatter_fig(df)
+            scatter_style = {'width': '100%', 'height': str(len(df) * 40) + 'px'}
 
-        return table_data, table_header, network_data, scatter_fig, scatter_style
+            return table_data, table_header, network_data, scatter_fig, scatter_style
+        else:
+            return [], [], [], {}, {}
     except Exception as ex:
         print(ex)
 
