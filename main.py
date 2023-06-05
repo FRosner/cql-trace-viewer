@@ -47,7 +47,13 @@ def build_scatter_fig(df):
         if source not in trace_activities:
             trace_activities[source] = []
 
-        activity_elapsed_timestamp = source_root_timestamps[source] + datetime.timedelta(microseconds=int(row['source_elapsed']))
+        elapsed_micros = 0
+        try:
+            elapsed_micros = int(row['source_elapsed'])
+        except ValueError:
+            pass
+            # do nothing, this is probably just a `--` value
+        activity_elapsed_timestamp = source_root_timestamps[source] + datetime.timedelta(microseconds=elapsed_micros)
 
         gantt_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'start': activity_elapsed_timestamp, 'source': source}
         trace_activities[source].append(gantt_activity)
@@ -62,10 +68,13 @@ def build_scatter_fig(df):
             sent_messages.append({'source': message_source, 'target': message_target, 'type': message_type, 'size': message_size,
                                   'source_activity': row['activity'], 'source_start': activity_elapsed_timestamp})
 
+    flattened_activities = [item for sublist in list(trace_activities.values()) for item in sublist]
+
+    for activity in flattened_activities:
         # Match received messages with sent messages
-        receiving_search = re.search('(.*) message received from /(.*) ', row['activity'], re.IGNORECASE)
+        receiving_search = re.search('(.*) message received from /(.*) ', activity['activity'], re.IGNORECASE)
         if receiving_search:
-            message_target = row['source']
+            message_target = activity['source']
             message_type = receiving_search.group(1)
             message_source = receiving_search.group(2)
             corresponding_sent_messages = [sent_message for sent_message in sent_messages if
@@ -75,9 +84,8 @@ def build_scatter_fig(df):
             if corresponding_sent_messages:
                 corresponding_sent_message = corresponding_sent_messages[0]
                 sent_messages.remove(corresponding_sent_message)
-                messages.append({**corresponding_sent_message, 'target_activity': row['activity'], 'target_start': activity_elapsed_timestamp})
+                messages.append({**corresponding_sent_message, 'target_activity': activity['activity'], 'target_start': activity['start']})
 
-    flattened_activities = [item for sublist in list(trace_activities.values()) for item in sublist]
     fig_df = pd.DataFrame.from_records(flattened_activities)
     fig = px.scatter(data_frame=fig_df, x='start', y='activity', color='source')
 
