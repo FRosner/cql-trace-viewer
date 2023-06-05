@@ -31,10 +31,6 @@ app.layout = html.Div([
 ])
 
 
-def scale_arrow_width(max_size, size):
-    return str(size / max_size * 10 + 1) + "px"
-
-
 def build_scatter_fig(df):
     source_root_timestamps = {}
     trace_activities = {}
@@ -119,7 +115,7 @@ def parse_trace(raw_trace):
 
             return table_data, table_header, scatter_fig, scatter_style
         else:
-            return [], [], [], {}, {}
+            return [], [], {}, {}
     except Exception as ex:
         print(ex)
 
