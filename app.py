@@ -9,14 +9,14 @@ import re
 
 app = Dash(__name__)
 
-trace_gantt = dcc.Graph(
-    id='trace_gantt',
+trace_scatter = dcc.Graph(
+    id='trace_scatter',
 )
 
 with open('trace.txt', 'r') as trace_file:
     trace_input = dcc.Textarea(
         id='cql-trace',
-        value=trace_file.read(),
+        # value=trace_file.read(),
         style={'width': '100%', 'height': 300},
     )
 
@@ -26,7 +26,7 @@ trace_table = dash_table.DataTable(
 
 app.layout = html.Div([
     trace_input,
-    trace_gantt,
+    trace_scatter,
     trace_table
 ])
 
@@ -92,15 +92,14 @@ def build_scatter_fig(df):
             arrowcolor=scatter_colors[message["source"]]
         )
     fig.update_yaxes(autorange="reversed")
-    fig.update_layout(transition_duration=500)
     return fig
 
 
 @app.callback(
     Output(trace_table, 'data'),
     Output(trace_table, 'columns'),
-    Output(trace_gantt, 'figure'),
-    Output(trace_gantt, 'style'),
+    Output(trace_scatter, 'figure'),
+    Output(trace_scatter, 'style'),
     Input(trace_input, 'value'),
 )
 def parse_trace(raw_trace):
