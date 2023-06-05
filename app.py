@@ -16,7 +16,7 @@ trace_scatter = dcc.Graph(
 with open('trace.txt', 'r') as trace_file:
     trace_input = dcc.Textarea(
         id='cql-trace',
-        # value=trace_file.read(),
+        value=trace_file.read(),
         style={'width': '100%', 'height': 300},
     )
 
@@ -110,7 +110,7 @@ def parse_trace(raw_trace):
             table_data = df.to_dict('records')
             table_header = [{"name": i, "id": i} for i in df.columns]
             scatter_fig = build_scatter_fig(df)
-            scatter_style = {'width': '100%', 'height': str(len(df) * 40) + 'px'}
+            scatter_style = {'width': '100%', 'height': str(len(df) * 30) + 'px'}
 
             return table_data, table_header, scatter_fig, scatter_style
         else:
