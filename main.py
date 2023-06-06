@@ -41,17 +41,18 @@ def build_scatter_fig(df):
         # Build activities
         source = row['source']
         activity_timestamp = datetime.datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-        if source not in source_root_timestamps:
-            source_root_timestamps[source] = activity_timestamp - datetime.timedelta(microseconds=row['source_elapsed'])
-        if source not in trace_activities:
-            trace_activities[source] = []
-
         elapsed_micros = 0
         try:
             elapsed_micros = int(row['source_elapsed'])
         except ValueError:
             pass
             # do nothing, this is probably just a `--` value
+
+        if source not in source_root_timestamps:
+            source_root_timestamps[source] = activity_timestamp - datetime.timedelta(microseconds=elapsed_micros)
+        if source not in trace_activities:
+            trace_activities[source] = []
+
         activity_elapsed_timestamp = source_root_timestamps[source] + datetime.timedelta(microseconds=elapsed_micros)
 
         gantt_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'start': activity_elapsed_timestamp, 'source': source}
