@@ -43,7 +43,7 @@ def build_scatter_fig(df):
         source = row['source']
         activity_timestamp = datetime.datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
         if source not in source_root_timestamps:
-            source_root_timestamps[source] = activity_timestamp
+            source_root_timestamps[source] = activity_timestamp - datetime.timedelta(microseconds=row['source_elapsed'])
         if source not in trace_activities:
             trace_activities[source] = []
 
