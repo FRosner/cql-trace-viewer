@@ -6,9 +6,8 @@ from dash.dependencies import Input, Output
 from io import StringIO
 import re
 
-dash_app = Dash(__name__)
+dash_app = Dash(__name__, title="CQL Trace Viewer")
 app = dash_app.server
-app.title = "CQL Trace Viewer"
 
 trace_scatter = dcc.Graph(
     id='trace_scatter',
