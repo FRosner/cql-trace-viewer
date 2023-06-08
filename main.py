@@ -42,6 +42,7 @@ def build_scatter_fig(df):
     for index, row in df.iterrows():
         # Build activities
         source = row['source']
+        row['source_activity'] = "{}: {}".format(row['source'], row['activity'])
         activity_timestamp = datetime.datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
         elapsed_micros = 0
         try:
@@ -57,18 +58,20 @@ def build_scatter_fig(df):
 
         activity_elapsed_timestamp = source_root_timestamps[source] + datetime.timedelta(microseconds=elapsed_micros)
 
-        gantt_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'start': activity_elapsed_timestamp, 'source': source}
+        gantt_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'source_activity': row['source_activity'],
+                          'start': activity_elapsed_timestamp, 'source': source}
         trace_activities[source].append(gantt_activity)
 
         # Collect messages being sent
-        sending_search = re.search('Sending (.*) message to /(.*), size=(.*) bytes', row['activity'], re.IGNORECASE)
+        sending_search = re.search('Sending (.*) message to /(.*), size=(.*) bytes', row['source_activity'], re.IGNORECASE)
         if sending_search:
             message_source = row['source']
             message_type = sending_search.group(1)
             message_target = sending_search.group(2)
             message_size = sending_search.group(3)
             sent_messages.append({'source': message_source, 'target': message_target, 'type': message_type, 'size': message_size,
-                                  'source_activity': row['activity'], 'source_start': activity_elapsed_timestamp})
+                                  'source_activity': row['activity'], 'source_source_activity': row['source_activity'],
+                                  'source_start': activity_elapsed_timestamp})
 
     flattened_activities = [item for sublist in list(trace_activities.values()) for item in sublist]
 
@@ -86,17 +89,18 @@ def build_scatter_fig(df):
             if corresponding_sent_messages:
                 corresponding_sent_message = corresponding_sent_messages[0]
                 sent_messages.remove(corresponding_sent_message)
-                messages.append({**corresponding_sent_message, 'target_activity': activity['activity'], 'target_start': activity['start']})
+                messages.append({**corresponding_sent_message, 'target_activity': activity['activity'], 'target_source_activity': activity['source_activity'],
+                                 'target_start': activity['start']})
 
     fig_df = pd.DataFrame.from_records(flattened_activities)
-    fig = px.scatter(data_frame=fig_df, x='start', y='activity', color='source')
+    fig = px.scatter(data_frame=fig_df, x='start', y='source_activity', color='source')
 
     for scatter in fig["data"]:
         scatter_colors[scatter["name"]] = scatter["marker"]["color"]
     for message in messages:
         fig.add_annotation(
-            x=message["target_start"], y=message["target_activity"],  # arrow head
-            ax=message["source_start"], ay=message['source_activity'],  # arrows tial
+            x=message["target_start"], y=message["target_source_activity"],  # arrow head
+            ax=message["source_start"], ay=message['source_source_activity'],  # arrows tial
             xref='x', yref='y', axref='x', ayref='y',
             text='', showarrow=True,  # only show the arrow
             arrowhead=2, arrowsize=1.5, arrowwidth=1,
