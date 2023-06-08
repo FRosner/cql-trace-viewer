@@ -1,3 +1,5 @@
+import traceback
+
 import pandas as pd
 import plotly.express as px
 import datetime
@@ -125,7 +127,7 @@ def parse_trace(raw_trace):
         else:
             return [], [], {}, {}
     except Exception as ex:
-        print(ex)
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
