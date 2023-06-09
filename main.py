@@ -58,9 +58,9 @@ def build_scatter_fig(df):
 
         activity_elapsed_timestamp = source_root_timestamps[source] + datetime.timedelta(microseconds=elapsed_micros)
 
-        gantt_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'source_activity': row['source_activity'],
+        trace_activity = {'activity': row['activity'], 'timestamp': activity_timestamp, 'source_activity': row['source_activity'],
                           'start': activity_elapsed_timestamp, 'source': source}
-        trace_activities[source].append(gantt_activity)
+        trace_activities[source].append(trace_activity)
 
         # Collect messages being sent
         sending_search = re.search('Sending (.*) message to /(.*), size=(.*) bytes', row['source_activity'], re.IGNORECASE)
