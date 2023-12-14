@@ -10,6 +10,13 @@ source venv/bin/activate
 pip install -r requirements.txt 
 ```
 
+### Test
+
+```
+pip install pytest
+pytest
+```
+
 ### Start App
 
 ```
