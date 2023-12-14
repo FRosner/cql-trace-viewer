@@ -11,6 +11,9 @@ import re
 dash_app = Dash(__name__, title="CQL Trace Viewer")
 app = dash_app.server
 
+sending_regexp = 'Sending (.*) message to .*/(.*)[,:].* size[ =](.*) bytes'
+receiving_regexp = '(.*) message received from .*/([^:^ ]*)'
+
 trace_scatter = dcc.Graph(
     id='trace_scatter',
 )
@@ -31,7 +34,6 @@ dash_app.layout = html.Div([
     trace_scatter,
     trace_table
 ])
-
 
 def build_scatter_fig(df):
     source_root_timestamps = {}
@@ -63,7 +65,7 @@ def build_scatter_fig(df):
         trace_activities[source].append(trace_activity)
 
         # Collect messages being sent
-        sending_search = re.search('Sending (.*) message to /(.*), size=(.*) bytes', row['source_activity'], re.IGNORECASE)
+        sending_search = re.search(sending_regexp, row['source_activity'], re.IGNORECASE)
         if sending_search:
             message_source = row['source']
             message_type = sending_search.group(1)
@@ -77,7 +79,7 @@ def build_scatter_fig(df):
 
     for activity in flattened_activities:
         # Match received messages with sent messages
-        receiving_search = re.search('(.*) message received from /(.*) ', activity['activity'], re.IGNORECASE)
+        receiving_search = re.search( receiving_regexp, activity['activity'], re.IGNORECASE)
         if receiving_search:
             message_target = activity['source']
             message_type = receiving_search.group(1)
